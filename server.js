@@ -13,7 +13,7 @@ app.use(session({
   saveUninitialized: true
 }));
 
-// Your MongoDB Atlas Connection String
+// MongoDB Atlas Connection
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://mr3173886_db_user:mN4QXSyfon3Q6F0M@cluster0.wxusz0z.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
@@ -36,24 +36,21 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
-// Auto Create Default Admin User
-async function createDefaultAdmin() {
+// Setup Admin Route
+app.get('/setup-admin', async (req, res) => {
   try {
-    const adminExists = await User.findOne({ username: 'admin' });
-    if (!adminExists) {
-      await User.create({
-        username: 'admin',
-        password: 'adminpassword',
-        role: 'admin',
-        status: 'active'
-      });
-      console.log('Default Admin Created: admin / adminpassword');
-    }
+    await User.deleteMany({ username: 'admin' });
+    await User.create({
+      username: 'loco',
+      password: 'monikaomydarling123@#009',
+      role: 'admin',
+      status: 'active'
+    });
+    res.send('<h1>✅ Admin User Created Successfully!</h1><a href="/login">Go to Login</a>');
   } catch (err) {
-    console.log('Admin check error:', err.message);
+    res.status(500).send('Error: ' + err.message);
   }
-}
-createDefaultAdmin();
+});
 
 // Static View Route
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views/login.html')));
@@ -131,8 +128,13 @@ app.post('/api/users/toggle-status', async (req, res) => {
   res.redirect('/');
 });
 
-// Dynamic App Execution Engine
+// Protected Dynamic App Execution Engine (Login Protection Added Here)
 app.get('/app/:name', async (req, res) => {
+  // Check if logged in
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+
   try {
     const script = await Script.findOne({ name: req.params.name });
     if (!script) return res.status(404).send('App Not Found!');
@@ -153,4 +155,4 @@ app.get('/app/:name', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-      
+                                        
