@@ -3,127 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>𝔐𝔯.𝔎𝔦𝔫𝔤 𓄂⓵𓆪࿐* official</title>
+  <title>𝔐𝔯.𝔎𝔦𝔫𝔤 Official</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #050508; color: #e0e0e0;
-      font-family: Arial, sans-serif; display: flex; flex-direction: column;
-      min-height: 100vh;
-    }
+    body { background: #050508; color: #e0e0e0; font-family: Arial, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+    @media (min-width: 768px) { body { flex-direction: row; } .sidebar { width: 220px !important; } .main { flex: 1; } }
     
-    @media (min-width: 768px) {
-      body { flex-direction: row; }
-      .sidebar { width: 220px !important; height: 100vh; }
-      .main { flex: 1; }
-    }
-
-    .sidebar {
-      width: 100%; background: #0e0e14; border-bottom: 1px solid #222;
-      padding: 12px; display: flex; flex-direction: column; gap: 8px;
-    }
-    .sidebar h3 { color: #a855f7; text-align: center; font-size: 18px; }
-    .sidebar a {
-      background: #1a1a24; border: 1px solid #333; color: #fff;
-      padding: 8px; text-decoration: none; text-align: center;
-      border-radius: 6px; font-size: 14px; transition: 0.2s;
-    }
-    .sidebar a:hover { border-color: #a855f7; background: #252538; }
+    .sidebar { width: 100%; background: #0e0e14; border-bottom: 1px solid #222; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .sidebar h3 { color: #a855f7; text-align: center; }
+    .sidebar a { background: #1a1a24; border: 1px solid #333; color: #fff; padding: 8px; text-decoration: none; text-align: center; border-radius: 6px; font-size: 14px; }
     
     .main { padding: 15px; overflow-y: auto; width: 100%; }
-    .header { border-bottom: 1px solid #222; padding-bottom: 8px; margin-bottom: 15px; }
-    .header h1 { font-size: 20px; color: #fff; }
-    
-    video { width: 100%; max-width: 100%; border-radius: 8px; border: 1px solid #a855f7; }
-    
     .panel { background: #12121a; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; }
-    .panel h3 { font-size: 15px; margin-bottom: 8px; }
     
-    input, select, textarea {
-      width: 100%; padding: 8px; margin: 4px 0 10px;
-      background: #08080c; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 13px;
-    }
-    .btn-action { background: #a855f7; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
-    
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
-    th, td { border: 1px solid #222; padding: 6px; text-align: left; }
+    input, textarea { width: 100%; padding: 8px; margin: 4px 0 10px; background: #08080c; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 13px; }
+    .btn { background: #a855f7; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+    .btn-edit { background: #eab308; color: #000; padding: 4px 8px; border-radius: 4px; border:none; cursor:pointer; font-weight:bold; }
+    .btn-del { background: #ef4444; color: #fff; padding: 4px 8px; border-radius: 4px; border:none; cursor:pointer; font-weight:bold; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+    th, td { border: 1px solid #222; padding: 8px; text-align: left; }
     th { background: #181824; }
   </style>
 </head>
 <body>
 
-  <!-- Sidebar -->
   <div class="sidebar">
     <h3>𝔐𝔯.𝔎𝔦𝔫𝔤</h3>
     <a href="/">🏠 Home</a>
     <div id="dynamic-scripts"></div>
-    <a href="/logout" style="background: #8b0000; margin-top: 5px;">Logout</a>
+    <a href="/logout" style="background: #8b0000; margin-top: 10px;">Logout</a>
   </div>
 
-  <!-- Main Content Area -->
   <div class="main">
-    <div class="header">
-      <h1>𝔐𝔯.𝔎𝔦𝔫𝔤 𓄂⓵𓆪࿐* official</h1>
-      <small style="color:#aaa;">Made by 💖 𝔐𝔯.𝔎𝔦𝔫𝔤</small>
-    </div>
-
-    <!-- Video Frame -->
-    <div class="panel">
-      <h3>Welcome Video</h3>
-      <video autoplay muted playsinline controls>
-        <source src="https://files.catbox.moe/14ind4.mp4" type="video/mp4">
-      </video>
-    </div>
-
-    <!-- Admin Panel Controls -->
     <div id="admin-panel" style="display: none;">
       
-      <!-- Option 1: Direct Code Paste -->
+      <!-- Editor Form -->
       <div class="panel">
-        <h3 style="color:#a855f7;">⚡ Paste & Create App</h3>
-        <form action="/api/scripts/create-code" method="POST">
-          <input type="text" name="scriptName" placeholder="App Name (e.g. anime)" required>
-          <textarea name="codeContent" rows="5" placeholder="Paste your JS code here..." required></textarea>
-          <button type="submit" class="btn-action">🚀 Create App</button>
+        <h3 id="form-title" style="color:#a855f7;">⚡ Create / Edit App</h3>
+        <form action="/api/scripts/save" method="POST">
+          <input type="hidden" id="scriptId" name="id">
+          <input type="text" id="scriptName" name="name" placeholder="App Name (e.g. anime)" required>
+          <textarea id="codeContent" name="code" rows="8" placeholder="Paste or Write JS code here..." required></textarea>
+          <button type="submit" class="btn" id="save-btn">🚀 Save & Publish App</button>
+          <button type="button" onclick="resetForm()" style="background:#444; margin-top:5px;" class="btn">Cancel Edit</button>
         </form>
       </div>
 
-      <!-- Option 2: File Upload -->
+      <!-- Apps List with Edit/Delete Controls -->
       <div class="panel">
-        <h3>📂 Upload Script File</h3>
-        <form action="/api/scripts/upload" method="POST" enctype="multipart/form-data">
-          <input type="file" name="scriptFile" required>
-          <button type="submit" class="btn-action" style="margin-top:6px;">Upload Script</button>
-        </form>
-      </div>
-
-      <!-- User Management -->
-      <div class="panel">
-        <h3>Create User</h3>
-        <form action="/api/users/create" method="POST">
-          <input type="text" name="username" placeholder="Username" required>
-          <input type="password" name="password" placeholder="Password" required>
-          <select name="role">
-            <option value="user">Normal User</option>
-            <option value="admin">Administrator</option>
-          </select>
-          <button type="submit" class="btn-action">Create User</button>
-        </form>
-
-        <h3 style="margin-top: 15px;">Manage Users</h3>
-        <div style="overflow-x:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="user-table-body"></tbody>
-          </table>
-        </div>
+        <h3>📱 Manage Apps</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>App Name</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="app-list"></tbody>
+        </table>
       </div>
 
     </div>
@@ -131,56 +69,61 @@
 
   <script>
     async function loadData() {
-      try {
-        const res = await fetch('/api/data');
-        const data = await res.json();
+      const res = await fetch('/api/data');
+      const data = await res.json();
 
-        const scriptNav = document.getElementById('dynamic-scripts');
-        scriptNav.innerHTML = '<h4 style="color:#a855f7; margin: 5px 0; font-size: 13px;">Uploaded Apps</h4>';
+      const scriptNav = document.getElementById('dynamic-scripts');
+      const appList = document.getElementById('app-list');
+      
+      scriptNav.innerHTML = '<h4 style="color:#a855f7; margin-top:10px;">Apps List</h4>';
+      appList.innerHTML = '';
 
-        if (data.scripts.length === 0) {
-          scriptNav.innerHTML += '<small style="color:#666;">No apps added</small>';
-        }
+      data.scripts.forEach(s => {
+        // Sidebar Link
+        scriptNav.innerHTML += `<a href="/app/${s.name}" target="_blank" style="display:block; margin:4px 0;">🚀 ${s.name}</a>`;
 
-        data.scripts.forEach(s => {
-          const btn = document.createElement('a');
-          btn.innerText = '🚀 ' + s.filename.replace('.js', '');
-          btn.href = '/app/' + s.slug;
-          btn.target = '_blank';
-          btn.style.display = 'block';
-          btn.style.margin = '3px 0';
-          scriptNav.appendChild(btn);
-        });
+        // Admin Table Row
+        appList.innerHTML += `
+          <tr>
+            <td><b>${s.name}</b></td>
+            <td>
+              <button class="btn-edit" onclick="editScript('${s._id}')">✏️ Edit</button>
+              <form action="/api/scripts/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?')">
+                <input type="hidden" name="id" value="${s._id}">
+                <button type="submit" class="btn-del">🗑️ Delete</button>
+              </form>
+            </td>
+          </tr>
+        `;
+      });
 
-        if (data.currentUser && data.currentUser.role === 'admin') {
-          document.getElementById('admin-panel').style.display = 'block';
-
-          const userBody = document.getElementById('user-table-body');
-          userBody.innerHTML = '';
-          data.users.forEach(u => {
-            userBody.innerHTML += `
-              <tr>
-                <td>${u.username}</td>
-                <td>${u.role}</td>
-                <td><b>${u.status}</b></td>
-                <td>
-                  <form action="/api/users/toggle-status" method="POST" style="display:inline;">
-                    <input type="hidden" name="userId" value="${u._id}">
-                    <input type="hidden" name="status" value="${u.status === 'active' ? 'deactive' : 'active'}">
-                    <button type="submit" style="padding:2px 5px;">${u.status === 'active' ? 'Deactive' : 'Active'}</button>
-                  </form>
-                </td>
-              </tr>
-            `;
-          });
-        }
-      } catch (err) {
-        console.error('Error:', err);
+      if (data.currentUser && data.currentUser.role === 'admin') {
+        document.getElementById('admin-panel').style.display = 'block';
       }
+    }
+
+    async function editScript(id) {
+      const res = await fetch('/api/scripts/get/' + id);
+      const script = await res.json();
+      
+      document.getElementById('scriptId').value = script._id;
+      document.getElementById('scriptName').value = script.name;
+      document.getElementById('codeContent').value = script.code;
+      
+      document.getElementById('form-title').innerText = '✏️ Edit App: ' + script.name;
+      document.getElementById('save-btn').innerText = '💾 Update App';
+      window.scrollTo(0, 0);
+    }
+
+    function resetForm() {
+      document.getElementById('scriptId').value = '';
+      document.getElementById('scriptName').value = '';
+      document.getElementById('codeContent').value = '';
+      document.getElementById('form-title').innerText = '⚡ Create / Edit App';
+      document.getElementById('save-btn').innerText = '🚀 Save & Publish App';
     }
 
     loadData();
   </script>
 </body>
 </html>
-
