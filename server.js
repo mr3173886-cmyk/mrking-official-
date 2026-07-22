@@ -13,10 +13,11 @@ app.use(session({
   saveUninitialized: true
 }));
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/mrking';
+// Your MongoDB Atlas Connection String
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://mr3173886_db_user:mN4QXSyfon3Q6F0M@cluster0.wxusz0z.mongodb.net/?appName=Cluster0";
+
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('MongoDB Connected Successfully'))
+  .then(() => console.log('MongoDB Atlas Connected Successfully!'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
 // Database Schemas
@@ -35,6 +36,25 @@ const UserSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', UserSchema);
 
+// Auto Create Default Admin User
+async function createDefaultAdmin() {
+  try {
+    const adminExists = await User.findOne({ username: 'admin' });
+    if (!adminExists) {
+      await User.create({
+        username: 'admin',
+        password: 'adminpassword',
+        role: 'admin',
+        status: 'active'
+      });
+      console.log('Default Admin Created: admin / adminpassword');
+    }
+  } catch (err) {
+    console.log('Admin check error:', err.message);
+  }
+}
+createDefaultAdmin();
+
 // Static View Route
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views/login.html')));
 app.get('/', (req, res) => {
@@ -44,13 +64,17 @@ app.get('/', (req, res) => {
 
 // Auth Routes
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username, password });
-  if (user && user.status === 'active') {
-    req.session.user = user;
-    return res.redirect('/');
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username, password });
+    if (user && user.status === 'active') {
+      req.session.user = user;
+      return res.redirect('/');
+    }
+    res.send('Invalid Credentials or Account Deactivated! <a href="/login">Try Again</a>');
+  } catch (err) {
+    res.status(500).send('Login Error: ' + err.message);
   }
-  res.send('Invalid Credentials or Account Deactivated! <a href="/login">Try Again</a>');
 });
 
 app.get('/logout', (req, res) => {
@@ -66,23 +90,20 @@ app.get('/api/data', async (req, res) => {
   res.json({ currentUser: req.session.user, scripts, users });
 });
 
-// Get Single Script Code (For Edit Modal)
+// Get Single Script Code
 app.get('/api/scripts/get/:id', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
   const script = await Script.findById(req.params.id);
   res.json(script);
 });
 
-// Save or Create Script (Database Storage)
+// Save or Create Script
 app.post('/api/scripts/save', async (req, res) => {
   if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).send('Unauthorized');
   const { id, name, code } = req.body;
-  
   if (id) {
-    // Update existing script
     await Script.findByIdAndUpdate(id, { name, code });
   } else {
-    // Create new script
     await Script.create({ name, code });
   }
   res.redirect('/');
@@ -95,13 +116,27 @@ app.post('/api/scripts/delete', async (req, res) => {
   res.redirect('/');
 });
 
-// Dynamic App Execution Engine (Runs code from MongoDB directly!)
+// User Management
+app.post('/api/users/create', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).send('Unauthorized');
+  const { username, password, role } = req.body;
+  await User.create({ username, password, role });
+  res.redirect('/');
+});
+
+app.post('/api/users/toggle-status', async (req, res) => {
+  if (!req.session.user || req.session.user.role !== 'admin') return res.status(403).send('Unauthorized');
+  const { userId, status } = req.body;
+  await User.findByIdAndUpdate(userId, { status });
+  res.redirect('/');
+});
+
+// Dynamic App Execution Engine
 app.get('/app/:name', async (req, res) => {
   try {
     const script = await Script.findOne({ name: req.params.name });
     if (!script) return res.status(404).send('App Not Found!');
 
-    // Execute code dynamic scope
     const module = { exports: {} };
     const runCode = new Function('module', 'exports', 'require', 'console', script.code);
     runCode(module, module.exports, require, console);
@@ -116,5 +151,6 @@ app.get('/app/:name', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+      
