@@ -3,23 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>𝔐𝔯.𝔎𝔦𝔫𝔤 Official</title>
+  <title>𝔐𝔯.𝔎𝔦𝔫𝔤 Official Dashboard</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #050508; color: #e0e0e0; font-family: Arial, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
     @media (min-width: 768px) { body { flex-direction: row; } .sidebar { width: 220px !important; } .main { flex: 1; } }
     
     .sidebar { width: 100%; background: #0e0e14; border-bottom: 1px solid #222; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .sidebar h3 { color: #a855f7; text-align: center; }
+    .sidebar h3 { color: #a855f7; text-align: center; margin-bottom: 5px; }
     .sidebar a { background: #1a1a24; border: 1px solid #333; color: #fff; padding: 8px; text-decoration: none; text-align: center; border-radius: 6px; font-size: 14px; }
     
     .main { padding: 15px; overflow-y: auto; width: 100%; }
     .panel { background: #12121a; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #222; }
+    .panel h3 { color: #a855f7; margin-bottom: 10px; }
     
-    input, textarea { width: 100%; padding: 8px; margin: 4px 0 10px; background: #08080c; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 13px; }
+    input, select, textarea { width: 100%; padding: 8px; margin: 4px 0 10px; background: #08080c; border: 1px solid #444; color: #fff; border-radius: 4px; font-size: 13px; }
     .btn { background: #a855f7; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
     .btn-edit { background: #eab308; color: #000; padding: 4px 8px; border-radius: 4px; border:none; cursor:pointer; font-weight:bold; }
     .btn-del { background: #ef4444; color: #fff; padding: 4px 8px; border-radius: 4px; border:none; cursor:pointer; font-weight:bold; }
+    .btn-toggle { background: #3b82f6; color: #fff; padding: 4px 8px; border-radius: 4px; border:none; cursor:pointer; font-weight:bold; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
     th, td { border: 1px solid #222; padding: 8px; text-align: left; }
@@ -38,19 +40,19 @@
   <div class="main">
     <div id="admin-panel" style="display: none;">
       
-      <!-- Editor Form -->
+      <!-- Code App Manager -->
       <div class="panel">
-        <h3 id="form-title" style="color:#a855f7;">⚡ Create / Edit App</h3>
+        <h3 id="form-title">⚡ Create / Edit App</h3>
         <form action="/api/scripts/save" method="POST">
           <input type="hidden" id="scriptId" name="id">
           <input type="text" id="scriptName" name="name" placeholder="App Name (e.g. anime)" required>
-          <textarea id="codeContent" name="code" rows="8" placeholder="Paste or Write JS code here..." required></textarea>
+          <textarea id="codeContent" name="code" rows="6" placeholder="Paste or Write JS code here..." required></textarea>
           <button type="submit" class="btn" id="save-btn">🚀 Save & Publish App</button>
           <button type="button" onclick="resetForm()" style="background:#444; margin-top:5px;" class="btn">Cancel Edit</button>
         </form>
       </div>
 
-      <!-- Apps List with Edit/Delete Controls -->
+      <!-- Apps List -->
       <div class="panel">
         <h3>📱 Manage Apps</h3>
         <table>
@@ -64,6 +66,36 @@
         </table>
       </div>
 
+      <!-- User Creation Panel -->
+      <div class="panel">
+        <h3>👤 Create New User</h3>
+        <form action="/api/users/create" method="POST">
+          <input type="text" name="username" placeholder="Username" required>
+          <input type="password" name="password" placeholder="Password" required>
+          <select name="role">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button type="submit" class="btn" style="background:#10b981;">➕ Add User</button>
+        </form>
+      </div>
+
+      <!-- Manage Users Panel -->
+      <div class="panel">
+        <h3>👥 Manage All Users</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="user-list"></tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 
@@ -74,15 +106,15 @@
 
       const scriptNav = document.getElementById('dynamic-scripts');
       const appList = document.getElementById('app-list');
+      const userList = document.getElementById('user-list');
       
       scriptNav.innerHTML = '<h4 style="color:#a855f7; margin-top:10px;">Apps List</h4>';
       appList.innerHTML = '';
+      userList.innerHTML = '';
 
+      // Load Apps
       data.scripts.forEach(s => {
-        // Sidebar Link
         scriptNav.innerHTML += `<a href="/app/${s.name}" target="_blank" style="display:block; margin:4px 0;">🚀 ${s.name}</a>`;
-
-        // Admin Table Row
         appList.innerHTML += `
           <tr>
             <td><b>${s.name}</b></td>
@@ -91,6 +123,28 @@
               <form action="/api/scripts/delete" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure?')">
                 <input type="hidden" name="id" value="${s._id}">
                 <button type="submit" class="btn-del">🗑️ Delete</button>
+              </form>
+            </td>
+          </tr>
+        `;
+      });
+
+      // Load Users
+      data.users.forEach(u => {
+        const nextStatus = u.status === 'active' ? 'deactivated' : 'active';
+        const btnText = u.status === 'active' ? '🚫 Deactivate' : '✅ Activate';
+        const statusBadge = u.status === 'active' ? '<b style="color:#10b981;">Active</b>' : '<b style="color:#ef4444;">Blocked</b>';
+        
+        userList.innerHTML += `
+          <tr>
+            <td><b>${u.username}</b></td>
+            <td>${u.role}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <form action="/api/users/toggle-status" method="POST" style="display:inline;">
+                <input type="hidden" name="userId" value="${u._id}">
+                <input type="hidden" name="status" value="${nextStatus}">
+                <button type="submit" class="btn-toggle">${btnText}</button>
               </form>
             </td>
           </tr>
