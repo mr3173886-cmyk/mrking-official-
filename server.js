@@ -8,13 +8,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-  secret: 'mrking-secret-key',
+  secret: process.env.SESSION_SECRET || 'mrking-secret-key',
   resave: false,
   saveUninitialized: true
 }));
 
 // MongoDB Atlas Connection
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://mr3173886_db_user:mN4QXSyfon3Q6F0M@cluster0.wxusz0z.mongodb.net/?appName=Cluster0";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://<username>:<password>@cluster0.wxusz0z.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Atlas Connected Successfully!'))
@@ -26,7 +26,7 @@ const ScriptSchema = new mongoose.Schema({
   code: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });
-const Script = mongoose.model('Script', ScriptSchema);
+const Script = mongoose.models.Script || mongoose.model('Script', ScriptSchema);
 
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
@@ -34,12 +34,12 @@ const UserSchema = new mongoose.Schema({
   role: { type: String, default: 'user' },
   status: { type: String, default: 'active' }
 });
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
 // Setup Admin Route
 app.get('/setup-admin', async (req, res) => {
   try {
-    await User.deleteMany({ username: 'admin' });
+    await User.deleteMany({ username: 'loco' });
     await User.create({
       username: 'loco',
       password: 'monikaomydarling123@#009',
@@ -52,7 +52,7 @@ app.get('/setup-admin', async (req, res) => {
   }
 });
 
-// Static View Route
+// Static View Routes
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'views/login.html')));
 app.get('/', (req, res) => {
   if (!req.session.user) return res.redirect('/login');
@@ -128,9 +128,8 @@ app.post('/api/users/toggle-status', async (req, res) => {
   res.redirect('/');
 });
 
-// Protected Dynamic App Execution Engine (Login Protection Added Here)
+// Dynamic App Execution Engine
 app.get('/app/:name', async (req, res) => {
-  // Check if logged in
   if (!req.session.user) {
     return res.redirect('/login');
   }
@@ -144,9 +143,9 @@ app.get('/app/:name', async (req, res) => {
     runCode(module, module.exports, require, console);
 
     if (typeof module.exports === 'function') {
-      module.exports(req, res);
+      await module.exports(req, res);
     } else {
-      res.send('Invalid Module Format');
+      res.send('Invalid Module Format. Module must export a function.');
     }
   } catch (err) {
     res.status(500).send('Error executing app: ' + err.message);
@@ -155,4 +154,4 @@ app.get('/app/:name', async (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-                                        
+  
